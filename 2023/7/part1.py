@@ -1,57 +1,39 @@
-hands = []
-bids = []
-with open("input.txt") as f:
-    for line in f:
-        hands.append(line.split(" ")[0])
-        bids.append(int(line.split(" ")[1]))
+letter_map = {"T": "A", "J": "B", "Q": "C", "K": "D", "A": "E"}
 
 
-def handeval(hand):
-    if len(set(hand)) == 1:
-        return 1
-    if len(set(hand)) == 2:
-        if hand.count(hand[0]) == 1 or hand.count(hand[1]) == 4:
-            return 2
-        else:
-            return 3
-    if len(set(hand)) == 3:
-        if (
-            hand.count(hand[0]) == 3
-            or hand.count(hand[1]) == 3
-            or hand.count(hand[2]) == 3
-        ):
-            return 4
-        else:
-            return 5
-    if len(set(hand)) == 4:
+def classify(hand):
+    counts = [hand.count(card) for card in hand]
+
+    if 5 in counts:
         return 6
-    if len(set(hand)) == 5:
-        return 7
+    if 4 in counts:
+        return 5
+    if 3 in counts:
+        if 2 in counts:
+            return 4
+        return 3
+    if counts.count(2) == 4:
+        return 2
+    if 2 in counts:
+        return 1
+    return 0
 
 
-def alpheval(hand):
-    alphabet = "AKQJT98765432"
-    score = [None] * 6
-    for i, s in enumerate(hand):
-        score[i + 1] = alphabet.index(s)
-    return score
+def strength(hand):
+    return (classify(hand), [letter_map.get(card, card) for card in hand])
 
 
-hand_score = [handeval(h) for h in hands]
-hand_alpha = [alpheval(h) for h in hands]
+plays = []
+with open("test.txt") as f:
+    for line in f:
+        hand, bid = line.split()
+        plays.append((hand, int(bid)))
 
-for hs, ha in zip(hand_score, hand_alpha):
-    ha[0] = hs
+plays.sort(key=lambda play: strength(play[0]))
 
-d = {bid: score for bid, score in zip(bids, hand_alpha)}
-final = dict(
-    sorted(
-        d.items(),
-        key=lambda x: (x[1][0], x[1][1], x[1][2], x[1][3], x[1][4]),
-        reverse=True,
-    )
-)
-tot = 0
-for k, i in zip(final.keys(), range(1, len(final) + 1)):
-    tot += k * i
-print(tot)
+total = 0
+
+for rank, (hand, bid) in enumerate(plays, 1):
+    total += rank * bid
+
+print(total)
